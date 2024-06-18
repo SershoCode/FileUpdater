@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SharpZipLib" Version="1.4.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SershoCode.FileUpdater.Logging\SershoCode.FileUpdater.Logging.csproj" />
+		<ProjectReference Include="..\SershoCode.FileUpdater.Options\SershoCode.FileUpdater.Options.csproj" />
+		<ProjectReference Include="..\SershoCode.FileUpdater.SelfUpdate.Client\SershoCode.FileUpdater.SelfUpdate.Client.csproj" />
+	</ItemGroup>
+
+</Project>

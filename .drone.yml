@@ -1,0 +1,121 @@
+kind: pipeline
+type: docker
+name: build-and-deploy
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+
+environment:
+  APP_NAME: SUpdater
+  PROJECT_NAME: SershoCode.FileUpdater.App
+  WIN64_ARCH: win-x64
+  LIN64_ARCH: linux-x64
+  WIN64_PUBLISH_DIR: publish/${WIN64_ARCH}
+  LIN64_PUBLISH_DIR: publish/${LIN64_ARCH}
+
+steps:
+  - name: Notify Deploy Started
+    image: curlimages/curl:8.1.0
+    pull: if-not-exists
+    environment:
+      TELEGRAM_TOKEN:
+        from_secret: telegram_token
+      TELEGRAM_TO:
+        from_secret: telegram_to
+    commands:
+      - |
+        MESSAGE_TEXT="*Deploy*:%20\`$$APP_NAME\`%0A\
+        *Repository*:%20\`$$DRONE_REPO_NAME\`%0A\
+        *Triggered%20by*:%20\`$$DRONE_BUILD_EVENT%20to%20$$DRONE_COMMIT_BRANCH\`%0A\
+        *Commit%20Message*:%20\`$(echo $$DRONE_COMMIT_MESSAGE | tr -d '\n' | sed 's/ /%20/g')\`%0A\
+        *Owner*:%20\`$$DRONE_REPO_OWNER\`%0A\
+        *DroneLink*:%20\[Drone\]($$DRONE_BUILD_LINK)"
+        curl -s -X POST "https://api.telegram.org/bot$$TELEGRAM_TOKEN/sendMessage?chat_id=$$TELEGRAM_TO&parse_mode=Markdown&text=$MESSAGE_TEXT"
+
+  - name: Build Windows-x64
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    pull: if-not-exists
+    commands:
+      - dotnet publish ./src/$${PROJECT_NAME} -c Release -r $${WIN64_ARCH} -f net8.0 -p:PublishSingleFile=true --self-contained true -p:DebugType=None -p:DebugSymbols=false -o $${WIN64_PUBLISH_DIR}
+
+  - name: Compress Windows-x64
+    image: joshkeegan/zip:3.19.0
+    pull: if-not-exists
+    commands:
+      - cd $${WIN64_PUBLISH_DIR}
+      - rm -f $${APP_NAME}.zip
+      - zip -r -9 $${APP_NAME}.zip .
+
+  - name: Release Windows-x64
+    image: bash
+    pull: if-not-exists
+    environment:
+      RELEASE_DIR:
+        from_secret: release_dir
+    commands:
+      - cd $${WIN64_PUBLISH_DIR}
+      - export md5=`md5sum $${APP_NAME}.exe | awk '{ print $1 }'`
+      - find . ! -name $${APP_NAME}.zip -type f -exec rm -f {} +
+      - mv -f $${APP_NAME}.zip $${RELEASE_DIR}/$${APP_NAME}/$${WIN64_ARCH}/$${APP_NAME}.zip
+      - echo {\"md5Hash\"':' \"$${md5}\"} > $${RELEASE_DIR}/$${APP_NAME}/$${WIN64_ARCH}/$${APP_NAME}.manifest.json
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: user-home-dir
+        path: /home
+
+  - name: Build Linux-x64
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    pull: if-not-exists
+    commands:
+      - dotnet publish ./src/$${PROJECT_NAME} -c Release -r $${LIN64_ARCH} -f net8.0 -p:PublishSingleFile=true --self-contained true -p:DebugType=None -p:DebugSymbols=false -o $${LIN64_PUBLISH_DIR}
+
+  - name: Compress Linux-x64
+    image: joshkeegan/zip:3.19.0
+    pull: if-not-exists
+    commands:
+      - cd $${LIN64_PUBLISH_DIR}
+      - rm -f $${APP_NAME}.zip
+      - zip -r -9 $${APP_NAME}.zip .
+
+  - name: Release Linux-64
+    image: bash
+    pull: if-not-exists
+    environment:
+      RELEASE_DIR:
+        from_secret: release_dir
+    commands:
+      - cd $${LIN64_PUBLISH_DIR}
+      - export md5=`md5sum $${APP_NAME} | awk '{ print $1 }'`
+      - find . ! -name $${APP_NAME}.zip -type f -exec rm -f {} +
+      - mv -f $${APP_NAME}.zip $${RELEASE_DIR}/$${APP_NAME}/$${LIN64_ARCH}/$${APP_NAME}.zip
+      - echo {\"md5Hash\"':' \"$${md5}\"} > $${RELEASE_DIR}/$${APP_NAME}/$${LIN64_ARCH}/$${APP_NAME}.manifest.json
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: user-home-dir
+        path: /home
+
+  - name: Notify Deploy Completed
+    image: curlimages/curl:8.1.0
+    pull: if-not-exists
+    environment:
+      TELEGRAM_TOKEN:
+        from_secret: telegram_token
+      TELEGRAM_TO:
+        from_secret: telegram_to
+    commands:
+      - |
+        MESSAGE_TEXT="-----------------------%0A*Deploy%20Success*:%20\`$$APP_NAME\`%0A-----------------------"
+        curl -s -X POST "https://api.telegram.org/bot$$TELEGRAM_TOKEN/sendMessage?chat_id=$$TELEGRAM_TO&parse_mode=Markdown&text=$MESSAGE_TEXT"
+
+volumes:
+  - name: docker-socket
+    host:
+      path: /var/run/docker.sock
+  - name: user-home-dir
+    host:
+      path: /home/sersho

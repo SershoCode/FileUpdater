@@ -1,0 +1,14 @@
+{
+  "FtpAddress": "myftp.com",                                      // Базовый адрес FTP.
+  "SyncFolder": "Awesome Game",                                   // Путь к папке синхронизации на FTP.
+  "User": "user",                                                 // Пользователь FTP.
+  "Password": "password",                                         // Пароль пользователя FTP.
+  "DownloadIgnore": [ "temp", ".log$", ".tmp$", ".cache$" ],      // Regex-шаблоны, чтобы не качать мусорные файлы.
+  "DownloadOnlyIfNotExists": [ "stats.ini", "gameoptions.ini" ],  // Файлы, которые мы качаем только в случае, если их нет. Если они есть, но при этом отличаются - не трогаем.
+  "DeleteIgnore": [ "" ],                                         // Regex-шаблоны, чтобы не удалить лишние файлы после синхронизации.
+  "IsSilentMode": false,                                          // Тихий режим. Не задаем никаких вопросов, просто запускаемся и апдейтим.
+    
+  "AppUpdateUrl": "https://releases.gamefarming.ru",              // Адрес с релизами SUpdater.
+  "IsCheckAppUpdates": true,                                      // Проверять наличие новых версий приложения при запуске.
+  "IsSendAnonymousStatistics": true                               // Разрешить отсылать анонимную статистику разработчику.
+}

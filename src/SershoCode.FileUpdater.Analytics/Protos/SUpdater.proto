@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "SershoCode.DbProxy.SUpdater";
+
+package SUpdaterProto;
+
+service SUpdaterProtoService {
+  rpc WriteStatsToClickHouse (WriteStatsToClickHouseRequest) returns (WriteStatsToClickHouseReply);
+}
+
+message WriteStatsToClickHouseRequest {
+	string OperationSystem = 1;
+	int64 FileHandledCount = 2;
+	double DownloadedMegabytes = 3; 
+	double MaxCpuLoadPercentage = 4; 
+	double AverageCpuLoadPercentage = 5; 
+	double MaxRamLoadMegabytes = 6; 
+	double AverageRamLoadMegabytes = 7; 
+	double UpdateTimeMinutes = 8; 
+	string UpdateDate = 9; 
+	string AppVersion = 10;
+}
+
+message WriteStatsToClickHouseReply {
+}

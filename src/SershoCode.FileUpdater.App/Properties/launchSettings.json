@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Windows": {
+      "commandName": "Project",
+      "hotReloadEnabled": false
+    },
+    "Ubuntu": {
+      "commandName": "WSL2",
+      "distributionName": "Ubuntu"
+    }
+  }
+}
